@@ -3,19 +3,21 @@
   'use strict';
   
   
-  function init (pathID) {
+  function init (items) {
     
-    if (!pathID) return alert('Sorry, you need to set a path first in the extension options.');
+    if (!items.path) return alert('Sorry, you need to set a path first in the extension options.');
+    if (!items.unit) return alert('Sorry, you need to set a assignment path first.');
     
     preloadTemplate();
     
     let baseURL   = 'https://online.theironyard.com';
-    let pathURL   = baseURL + '/paths/' + pathID;
-    let hwURL     = baseURL + '/homework/path/' + pathID;
+    let pathURL   = baseURL + '/paths/' + items.path;
+    let hwURL     = baseURL + '/homework/path/' + items.path;
+    let asgnUnit  = items.unit;
     
     $.get(pathURL).then( res => {
       
-      let hwUnit = $(res).find("[data-pathitem='1747']"); // Hard Coded... bad bad bad
+      let hwUnit = $(res).find("[data-pathitem='" + asgnUnit + "']");
       let assignments = hwUnit.find('.m-pathitem-resources a');
 
       let totalAssignments = [];
@@ -143,8 +145,8 @@
   }
   
   
-  chrome.storage.sync.get(['path'], function(items) {
-    init(items.path);
+  chrome.storage.sync.get(['path', 'unit'], function(items) {
+    init(items);
   });
   
 }());
