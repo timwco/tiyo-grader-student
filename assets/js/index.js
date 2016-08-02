@@ -21,12 +21,12 @@
       let assignments = hwUnit.find('.m-pathitem-resources a');
 
       let totalAssignments = [];
-      assignments.each( (index, item) => {        
+      assignments.each( (index, item) => {
         totalAssignments.push(
           $.trim($(item).find('h4.m-unititem-title').text())
         );
       });
-      
+            
       let totalPoints = calculateTotalPoints(totalAssignments);
       
       checkStudentAssignments(hwURL, totalPoints);
@@ -52,7 +52,12 @@
     
     $.get(hwURL).then( res => {
       
-      let homework = $(res).find('.m-homeworkitem');
+      // Get homework & filter out any bonus assignment
+      let initialHomework = $(res).find('.m-homeworkitem');
+      let homework = initialHomework.filter( (index, element) => {
+        return $(element).find('.m-homeworkitem-title a').text().indexOf('Bonus') < 0;
+      });
+
       let statuses = {
         'Not graded': [], 'Incomplete': [], 'Complete and unsatisfactory': [], 
         'Complete and satisfactory': [], 'Exceeds expectations': [], 'Retracted': [], 
@@ -78,15 +83,13 @@
   }
   
   function calculateGrade (statuses, totalPoints) {
-    
-      let complete = statuses['Complete and satisfactory'].length + statuses['Exceeds expectations'].length;
       
       let incomplete = statuses['Not Submitted'].length + statuses['Incomplete'].length + statuses['Complete and unsatisfactory'].length;
       
-      let completeAssignments = statuses['Complete and satisfactory'].concat(statuses['Exceeds expectations']);
+      let complete = statuses['Complete and satisfactory'].concat(statuses['Exceeds expectations']);
             
       let studentPoints = 0;
-      completeAssignments.forEach( assignment => {
+      complete.forEach( assignment => {
         if (assignment.title.match(/\*\*/)) {
           studentPoints = studentPoints + 4;
         } else {
@@ -95,6 +98,11 @@
       });
       
       let grade = Math.floor((studentPoints / totalPoints) * 100);
+
+      // console.log('Student Points', studentPoints);
+      // console.log('Total Points', totalPoints);
+      // console.log('Grade', grade);
+      // console.log(statuses);
       
       displayOnScreen(grade);
     
@@ -114,23 +122,17 @@
   
   function preloadTemplate() {
     let displayHTML = displayTemplate();
-    $('section.l-content').prepend(displayHTML);
+    $('h5.mb2').first().after(displayHTML);
   }
   
   function displayTemplate () {
     return `
-      <div class="mx-auto max-width-2 px2">
-        <div class="clearfix mxn2 mt2 sm-mt4">
-          <div class="col col-12 px2">
-            <div class="box-stacked block">
-              <div class="m-immersiveitem px2 py3 sm-p3">
-                <div class="m-immersiveitem-info">
-                  <h3 class="m-immersiveitem-info-title">Current Standing</h3>
-                </div>
-                <div class="m-immersiveitem-meta" id="myGrade">calculating...</div>
-              </div>
-            </div>
-          </div>
+      <div class="box-stacked bg-light-grey py2 px3">
+        <div class="mb1">
+          <span class="font-large font-sans-medium color-grey mr1" id="myGrade">
+            <span class="loading-pulse"></span>
+          </span>
+          <span class="font-small">Course Grade</span>
         </div>
       </div>
     `;
@@ -138,9 +140,7 @@
   
   function gradeTemplate (color, myGrade) {
     return `
-      <label class="m-immersiveitem-meta-type" style="background-color: ${ color }; color: #FFF;">
-        ${ myGrade }% Complete
-      </label>
+      <span class="cool-grade" style="background-color: ${ color };">${ myGrade }%</span>
     `;
   }
   
